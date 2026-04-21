@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubTrack - Subscription Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --card-hover: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--card);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Pages */
+        .page {
+            display: none;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--card) 0%, var(--bg) 100%);
+            border-radius: 20px;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card.warning {
+            border-color: var(--warning);
+            background: linear-gradient(135deg, var(--card) 0%, rgba(245, 158, 11, 0.1) 100%);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-value.warning {
+            color: var(--warning);
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-card h3 {
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Subscriptions List */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .subscriptions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .subscription-item {
+            background: var(--card);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: auto 1fr auto auto auto;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .subscription-item:hover {
+            border-color: var(--primary);
+        }
+
+        .subscription-item.expiring-soon {
+            border-color: var(--warning);
+            background: linear-gradient(135deg, var(--card) 0%, rgba(245, 158, 11, 0.05) 100%);
+        }
+
+        .sub-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: var(--primary);
+        }
+
+        .sub-info h4 {
+            margin-bottom: 0.25rem;
+        }
+
+        .sub-info p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .sub-cost {
+            text-align: right;
+        }
+
+        .sub-cost .amount {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .sub-cost .cycle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .sub-renewal {
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .sub-renewal .date {
+            font-weight: 600;
+        }
+
+        .sub-renewal .days {
+            font-size: 0.85rem;
+        }
+
+        .sub-renewal .days.urgent {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .sub-renewal .days.safe {
+            color: var(--text-muted);
+        }
+
+        .sub-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .sub-actions button {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: var(--card-hover);
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .sub-actions button:hover {
+            background: var(--danger);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border);
+        }
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .modal-actions button {
+            flex: 1;
+        }
+
+        .btn-secondary {
+            background: var(--card-hover);
+            color: var(--text);
+        }
+
+        /* Alerts Section */
+        .alerts-section {
+            margin-bottom: 2rem;
+        }
+
+        .alert-card {
+            background: linear-gradient(135deg, var(--card) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border: 1px solid var(--warning);
+            padding: 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+        }
+
+        .alert-content h4 {
+            color: var(--warning);
+        }
+
+        .alert-content p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* AI Advisor */
+        .advisor-section {
+            background: linear-gradient(135deg, var(--card) 0%, rgba(99, 102, 241, 0.1) 100%);
+            border: 1px solid var(--primary);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .advisor-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .advisor-tips {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .advisor-tip {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+
+        .advisor-tip-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Category Pills */
+        .category-filter {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .category-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .category-pill:hover, .category-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Currency Selector */
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .currency-selector select {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .subscription-item {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .sub-cost, .sub-renewal {
+                text-align: left;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">💳 SubTrack</div>
+        <div class="nav-links">
+            <button class="nav-link active" onclick="showPage('home')">Home</button>
+            <button class="nav-link" onclick="showPage('dashboard')">Dashboard</button>
+            <button class="nav-link" onclick="showPage('add')">Add Subscription</button>
+        </div>
+        <div class="currency-selector">
+            <label>💱</label>
+            <select id="currencySelect" onchange="changeCurrency()">
+                <option value="₹">₹ INR</option>
+                <option value="$">$ USD</option>
+                <option value="€">€ EUR</option>
+                <option value="£">£ GBP</option>
+            </select>
+        </div>
+    </nav>
+
+    <!-- Home Page -->
+    <div id="home" class="page active">
+        <div class="hero">
+            <h1>Take Control of Your Subscriptions</h1>
+            <p>Stop wasting money on forgotten subscriptions. Track, analyze, and optimize all your recurring payments in one beautiful dashboard.</p>
+            <button class="btn btn-primary" onclick="showPage('dashboard')">🚀 Start Tracking</button>
+        </div>
+
+        <h2 style="text-align: center; margin-bottom: 1rem;">Why SubTrack?</h2>
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Visual Dashboard</h3>
+                <p>See all your subscriptions at a glance with beautiful charts and spending breakdowns.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏰</div>
+                <h3>Never Miss a Renewal</h3>
+                <p>Get alerted before any subscription renews so you can decide to keep or cancel.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💡</div>
+                <h3>Smart Insights</h3>
+                <p>AI-powered suggestions help you identify unused subscriptions and save money.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌍</div>
+                <h3>Multi-Currency</h3>
+                <p>Track subscriptions in any currency - perfect for international services.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard" class="page">
+        <h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Monthly Spending</div>
+                <div class="stat-value" id="monthlySpend">₹0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Yearly Spending</div>
+                <div class="stat-value" id="yearlySpend">₹0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Subscriptions</div>
+                <div class="stat-value" id="activeCount">0</div>
+            </div>
+            <div class="stat-card warning" id="upcomingCard" style="display: none;">
+                <div class="stat-label">⚠️ Upcoming Renewals (7 days)</div>
+                <div class="stat-value warning" id="upcomingCount">0</div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="alerts-section" id="alertsSection" style="display: none;">
+            <h3 style="margin-bottom: 1rem;">⚠️ Upcoming Renewals</h3>
+            <div id="alertsList"></div>
+        </div>
+
+        <!-- AI Advisor -->
+        <div class="advisor-section" id="advisorSection" style="display: none;">
+            <h3>🤖 AI Spending Advisor</h3>
+            <div class="advisor-tips" id="advisorTips"></div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Spending by Category</h3>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Monthly Trend</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscriptions List -->
+        <div class="section-header">
+            <h3>All Subscriptions</h3>
+            <button class="btn btn-primary" onclick="showPage('add')">+ Add New</button>
+        </div>
+
+        <div class="category-filter">
+            <button class="category-pill active" onclick="filterCategory('all', this)">All</button>
+            <button class="category-pill" onclick="filterCategory('entertainment', this)">🎬 Entertainment</button>
+            <button class="category-pill" onclick="filterCategory('education', this)">📚 Education</button>
+            <button class="category-pill" onclick="filterCategory('fitness', this)">💪 Fitness</button>
+            <button class="category-pill" onclick="filterCategory('productivity', this)">⚡ Productivity</button>
+            <button class="category-pill" onclick="filterCategory('other', this)">📦 Other</button>
+        </div>
+
+        <div class="subscriptions-list" id="subscriptionsList">
+            <div class="empty-state">
+                <div class="icon">📭</div>
+                <h3>No subscriptions yet</h3>
+                <p>Start tracking your subscriptions to see them here.</p>
+                <button class="btn btn-primary" onclick="showPage('add')" style="margin-top: 1rem;">+ Add Your First Subscription</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Subscription Page -->
+    <div id="add" class="page">
+        <h1 style="margin-bottom: 1.5rem;">Add Subscription</h1>
+        
+        <div class="modal" style="margin: 0 auto; max-width: 500px;">
+            <form id="subscriptionForm" onsubmit="addSubscription(event)">
+                <div class="form-group">
+                    <label>Service Name</label>
+                    <input type="text" id="serviceName" placeholder="e.g., Netflix, Spotify" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category" required>
+                        <option value="entertainment">🎬 Entertainment</option>
+                        <option value="education">📚 Education</option>
+                        <option value="fitness">💪 Fitness</option>
+                        <option value="productivity">⚡ Productivity</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cost</label>
+                        <input type="number" id="cost" placeholder="199" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Billing Cycle</label>
+                        <select id="cycle" required>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Next Renewal Date</label>
+                    <input type="date" id="renewalDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Last Used (Optional - for smart suggestions)</label>
+                    <input type="date" id="lastUsed">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="showPage('dashboard')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Subscription</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quick Add Suggestions -->
+        <div style="margin-top: 2rem; text-align: center;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-muted);">Quick Add Popular Services</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;">
+                <button class="category-pill" onclick="quickAdd('Netflix', 'entertainment', 199)">Netflix</button>
+                <button class="category-pill" onclick="quickAdd('Spotify', 'entertainment', 119)">Spotify</button>
+                <button class="category-pill" onclick="quickAdd('Amazon Prime', 'entertainment', 179)">Prime</button>
+                <button class="category-pill" onclick="quickAdd('YouTube Premium', 'entertainment', 129)">YouTube</button>
+                <button class="category-pill" onclick="quickAdd('Gym Membership', 'fitness', 1500)">Gym</button>
+                <button class="category-pill" onclick="quickAdd('Coursera', 'education', 3000)">Coursera</button>
+                <button class="category-pill" onclick="quickAdd('Notion', 'productivity', 800)">Notion</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h2>Edit Subscription</h2>
+            <form id="editForm" onsubmit="saveEdit(event)">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Service Name</label>
+                    <input type="text" id="editServiceName" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="editCategory" required>
+                        <option value="entertainment">🎬 Entertainment</option>
+                        <option value="education">📚 Education</option>
+                        <option value="fitness">💪 Fitness</option>
+                        <option value="productivity">⚡ Productivity</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cost</label>
+                        <input type="number" id="editCost" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Billing Cycle</label>
+                        <select id="editCycle" required>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Next Renewal Date</label>
+                    <input type="date" id="editRenewalDate" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let subscriptions = JSON.parse(localStorage.getItem('subscriptions')) || [];
+        let currentCurrency = localStorage.getItem('currency') || '₹';
+        let currentFilter = 'all';
+        let categoryChart, trendChart;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('currencySelect').value = currentCurrency;
+            document.getElementById('renewalDate').valueAsDate = new Date();
+            renderDashboard();
+        });
+
+        // Page Navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelector(`[onclick="showPage('${pageId}')"]`).classList.add('active');
+            
+            if (pageId === 'dashboard') {
+                renderDashboard();
+            }
+        }
+
+        // Currency
+        function changeCurrency() {
+            currentCurrency = document.getElementById('currencySelect').value;
+            localStorage.setItem('currency', currentCurrency);
+            renderDashboard();
+        }
+
+        function formatCurrency(amount) {
+            return `${currentCurrency}${amount.toLocaleString('en-IN')}`;
+        }
+
+        // Add Subscription
+        function addSubscription(e) {
+            e.preventDefault();
+            
+            const sub = {
+                id: Date.now(),
+                name: document.getElementById('serviceName').value,
+                category: document.getElementById('category').value,
+                cost: parseFloat(document.getElementById('cost').value),
+                cycle: document.getElementById('cycle').value,
+                renewalDate: document.getElementById('renewalDate').value,
+                lastUsed: document.getElementById('lastUsed').value || null,
+                createdAt: new Date().toISOString()
+            };
+
+            subscriptions.push(sub);
+            saveSubscriptions();
+            document.getElementById('subscriptionForm').reset();
+            document.getElementById('renewalDate').valueAsDate = new Date();
+            showPage('dashboard');
+        }
+
+        function quickAdd(name, category, cost) {
+            document.getElementById('serviceName').value = name;
+            document.getElementById('category').value = category;
+            document.getElementById('cost').value = cost;
+            document.getElementById('cycle').value = 'monthly';
+            
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            document.getElementById('renewalDate').valueAsDate = nextMonth;
+        }
+
+        // Edit Subscription
+        function editSubscription(id) {
+            const sub = subscriptions.find(s => s.id === id);
+            if (!sub) return;
+
+            document.getElementById('editId').value = id;
+            document.getElementById('editServiceName').value = sub.name;
+            document.getElementById('editCategory').value = sub.category;
+            document.getElementById('editCost').value = sub.cost;
+            document.getElementById('editCycle').value = sub.cycle;
+            document.getElementById('editRenewalDate').value = sub.renewalDate;
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function saveEdit(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editId').value);
+            const index = subscriptions.findIndex(s => s.id === id);
+            
+            if (index !== -1) {
+                subscriptions[index] = {
+                    ...subscriptions[index],
+                    name: document.getElementById('editServiceName').value,
+                    category: document.getElementById('editCategory').value,
+                    cost: parseFloat(document.getElementById('editCost').value),
+                    cycle: document.getElementById('editCycle').value,
+                    renewalDate: document.getElementById('editRenewalDate').value
+                };
+                saveSubscriptions();
+                closeEditModal();
+                renderDashboard();
+            }
+        }
+
+        // Delete Subscription
+        function deleteSubscription(id) {
+            if (confirm('Are you sure you want to delete this subscription?')) {
+                subscriptions = subscriptions.filter(s => s.id !== id);
+                saveSubscriptions();
+                renderDashboard();
+            }
+        }
+
+        // Save to LocalStorage
+        function saveSubscriptions() {
+            localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
+        }
+
+        // Calculate Monthly Cost
+        function getMonthlyEquivalent(sub) {
+            switch (sub.cycle) {
+                case 'weekly': return sub.cost * 4.33;
+                case 'yearly': return sub.cost / 12;
+                default: return sub.cost;
+            }
+        }
+
+        // Days Until Renewal
+        function getDaysUntilRenewal(dateStr) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const renewal = new Date(dateStr);
+            renewal.setHours(0, 0, 0, 0);
+            return Math.ceil((renewal - today) / (1000 * 60 * 60 * 24));
+        }
+
+        // Filter by Category
+        function filterCategory(category, btn) {
+            currentFilter = category;
+            document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            renderSubscriptionsList();
+        }
+
+        // Render Dashboard
+        function renderDashboard() {
+            renderStats();
+            renderAlerts();
+            renderAdvisor();
+            renderCharts();
+            renderSubscriptionsList();
+        }
+
+        function renderStats() {
+            const monthlyTotal = subscriptions.reduce((sum, sub) => sum + getMonthlyEquivalent(sub), 0);
+            const yearlyTotal = monthlyTotal * 12;
+            const upcoming = subscriptions.filter(s => getDaysUntilRenewal(s.renewalDate) <= 7 && getDaysUntilRenewal(s.renewalDate) >= 0).length;
+
+            document.getElementById('monthlySpend').textContent = formatCurrency(Math.round(monthlyTotal));
+            document.getElementById('yearlySpend').textContent = formatCurrency(Math.round(yearlyTotal));
+            document.getElementById('activeCount').textContent = subscriptions.length;
+            
+            const upcomingCard = document.getElementById('upcomingCard');
+            if (upcoming > 0) {
+                upcomingCard.style.display = 'block';
+                document.getElementById('upcomingCount').textContent = upcoming;
+            } else {
+                upcomingCard.style.display = 'none';
+            }
+        }
+
+        function renderAlerts() {
+            const alertsSection = document.getElementById('alertsSection');
+            const alertsList = document.getElementById('alertsList');
+            const upcoming = subscriptions
+                .filter(s => getDaysUntilRenewal(s.renewalDate) <= 7 && getDaysUntilRenewal(s.renewalDate) >= 0)
+                .sort((a, b) => getDaysUntilRenewal(a.renewalDate) - getDaysUntilRenewal(b.renewalDate));
+
+            if (upcoming.length === 0) {
+                alertsSection.style.display = 'none';
+                return;
+            }
+
+            alertsSection.style.display = 'block';
+            alertsList.innerHTML = upcoming.map(sub => {
+                const days = getDaysUntilRenewal(sub.renewalDate);
+                const daysText = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`;
+                return `
+                    <div class="alert-card">
+                        <div class="alert-icon">⏰</div>
+                        <div class="alert-content">
+                            <h4>${sub.name} renews ${daysText.toLowerCase()}</h4>
+                            <p>You will be charged ${formatCurrency(sub.cost)} on ${new Date(sub.renewalDate).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAdvisor() {
+            const advisorSection = document.getElementById('advisorSection');
+            const advisorTips = document.getElementById('advisorTips');
+            const tips = [];
+
+            // Category spending analysis
+            const categorySpending = {};
+            subscriptions.forEach(sub => {
+                const monthly = getMonthlyEquivalent(sub);
+                categorySpending[sub.category] = (categorySpending[sub.category] || 0) + monthly;
+            });
+
+            const categoryNames = {
+                entertainment: 'Entertainment',
+                education: 'Education',
+                fitness: 'Fitness',
+                productivity: 'Productivity',
+                other: 'Other'
+            };
+
+            Object.entries(categorySpending).forEach(([cat, amount]) => {
+                if (amount > 500) {
+                    tips.push({
+                        icon: '📊',
+                        text: `You're spending ${formatCurrency(Math.round(amount))}/month on ${categoryNames[cat]}. Consider if all these services are essential.`
+                    });
+                }
+            });
+
+            // Unused subscriptions
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            subscriptions.forEach(sub => {
+                if (sub.lastUsed && new Date(sub.lastUsed) < thirtyDaysAgo) {
+                    tips.push({
+                        icon: '💤',
+                        text: `You haven't used ${sub.name} in over 30 days. Consider canceling to save ${formatCurrency(getMonthlyEquivalent(sub))}/month.`
+                    });
+                }
+            });
+
+            // Duplicate category suggestions
+            if (categorySpending.entertainment > 800) {
+                tips.push({
+                    icon: '💡',
+                    text: `Multiple streaming services? Consider rotating subscriptions monthly instead of keeping all active.`
+                });
+            }
+
+            // Total spending warning
+            const totalMonthly = subscriptions.reduce((sum, sub) => sum + getMonthlyEquivalent(sub), 0);
+            if (totalMonthly > 2000) {
+                tips.push({
+                    icon: '⚠️',
+                    text: `Your subscriptions total ${formatCurrency(Math.round(totalMonthly))}/month (${formatCurrency(Math.round(totalMonthly * 12))}/year). Review for potential savings.`
+                });
+            }
+
+            if (tips.length === 0) {
+                advisorSection.style.display = 'none';
+                return;
+            }
+
+            advisorSection.style.display = 'block';
+            advisorTips.innerHTML = tips.map(tip => `
+                <div class="advisor-tip">
+                    <span class="advisor-tip-icon">${tip.icon}</span>
+                    <span>${tip.text}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderCharts() {
+            // Category Chart
+            const categoryData = {};
+            subscriptions.forEach(sub => {
+                const monthly = getMonthlyEquivalent(sub);
+                categoryData[sub.category] = (categoryData[sub.category] || 0) + monthly;
+            });
+
+            const categoryLabels = {
+                entertainment: '🎬 Entertainment',
+                education: '📚 Education',
+                fitness: '💪 Fitness',
+                productivity: '⚡ Productivity',
+                other: '📦 Other'
+            };
+
+            const categoryColors = {
+                entertainment: '#ef4444',
+                education: '#3b82f6',
+                fitness: '#10b981',
+                productivity: '#f59e0b',
+                other: '#8b5cf6'
+            };
+
+            const ctx1 = document.getElementById('categoryChart').getContext('2d');
+            
+            if (categoryChart) categoryChart.destroy();
+            
+            if (Object.keys(categoryData).length > 0) {
+                categoryChart = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(categoryData).map(k => categoryLabels[k]),
+                        datasets: [{
+                            data: Object.values(categoryData),
+                            backgroundColor: Object.keys(categoryData).map(k => categoryColors[k]),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#94a3b8' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Trend Chart (simulated monthly data)
+            const ctx2 = document.getElementById('trendChart').getContext('2d');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            const monthlyTotal = subscriptions.reduce((sum, sub) => sum + getMonthlyEquivalent(sub), 0);
+            
+            // Simulate historical data with some variance
+            const trendData = months.map((_, i) => {
+                const variance = (Math.random() - 0.5) * monthlyTotal * 0.3;
+                return Math.max(0, Math.round(monthlyTotal + variance - (5 - i) * 50));
+            });
+            trendData[5] = Math.round(monthlyTotal); // Current month is accurate
+
+            if (trendChart) trendChart.destroy();
+            
+            trendChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Monthly Spending',
+                        data: trendData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSubscriptionsList() {
+            const list = document.getElementById('subscriptionsList');
+            
+            let filtered = subscriptions;
+            if (currentFilter !== 'all') {
+                filtered = subscriptions.filter(s => s.category === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <h3>${currentFilter === 'all' ? 'No subscriptions yet' : 'No subscriptions in this category'}</h3>
+                        <p>${currentFilter === 'all' ? 'Start tracking your subscriptions to see them here.' : 'Add subscriptions in this category to see them here.'}</p>
+                        <button class="btn btn-primary" onclick="showPage('add')" style="margin-top: 1rem;">+ Add Subscription</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by renewal date
+            filtered.sort((a, b) => getDaysUntilRenewal(a.renewalDate) - getDaysUntilRenewal(b.renewalDate));
+
+            const categoryIcons = {
+                entertainment: '🎬',
+                education: '📚',
+                fitness: '💪',
+                productivity: '⚡',
+                other: '📦'
+            };
+
+            list.innerHTML = filtered.map(sub => {
+                const days = getDaysUntilRenewal(sub.renewalDate);
+                const isExpiringSoon = days >= 0 && days <= 7;
+                const daysText = days < 0 ? 'Overdue' : days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `${days} days`;
+                const cycleLabel = sub.cycle === 'monthly' ? '/mo' : sub.cycle === 'yearly' ? '/yr' : '/wk';
+
+                return `
+                    <div class="subscription-item ${isExpiringSoon ? 'expiring-soon' : ''}">
+                        <div class="sub-icon">${categoryIcons[sub.category]}</div>
+                        <div class="sub-info">
+                            <h4>${sub.name}</h4>
+                            <p>${sub.category.charAt(0).toUpperCase() + sub.category.slice(1)} • ${sub.cycle}</p>
+                        </div>
+                        <div class="sub-cost">
+                            <div class="amount">${formatCurrency(sub.cost)}</div>
+                            <div class="cycle">${cycleLabel}</div>
+                        </div>
+                        <div class="sub-renewal">
+                            <div class="date">${new Date(sub.renewalDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                            <div class="days ${isExpiringSoon ? 'urgent' : 'safe'}">${daysText}</div>
+                        </div>
+                        <div class="sub-actions">
+                            <button onclick="editSubscription(${sub.id})" title="Edit">✏️</button>
+                            <button onclick="deleteSubscription(${sub.id})" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Add sample data for demo
+        function addSampleData() {
+            if (subscriptions.length === 0) {
+                const today = new Date();
+                const sampleSubs = [
+                    { name: 'Netflix', category: 'entertainment', cost: 199, cycle: 'monthly', renewalDate: addDays(today, 3) },
+                    { name: 'Spotify', category: 'entertainment', cost: 119, cycle: 'monthly', renewalDate: addDays(today, 12) },
+                    { name: 'Amazon Prime', category: 'entertainment', cost: 1499, cycle: 'yearly', renewalDate: addDays(today, 45) },
+                    { name: 'Gym Membership', category: 'fitness', cost: 1500, cycle: 'monthly', renewalDate: addDays(today, 5), lastUsed: addDays(today, -35) },
+                    { name: 'Coursera Plus', category: 'education', cost: 3000, cycle: 'monthly', renewalDate: addDays(today, 20) },
+                    { name: 'Notion', category: 'productivity', cost: 800, cycle: 'monthly', renewalDate: addDays(today, 8) }
+                ];
+
+                sampleSubs.forEach(sub => {
+                    subscriptions.push({
+                        id: Date.now() + Math.random(),
+                        ...sub,
+                        createdAt: new Date().toISOString()
+                    });
+                });
+                saveSubscriptions();
+            }
+        }
+
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result.toISOString().split('T')[0];
+        }
+
+        // Uncomment below line to add sample data on first load
+        // addSampleData();
+    </script>
+</body>
+</html>
