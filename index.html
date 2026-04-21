@@ -121,6 +121,11 @@
             transition: all 0.2s;
         }
 
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
         .btn-primary {
             background: var(--primary);
             color: white;
@@ -138,6 +143,11 @@
 
         .btn-danger:hover {
             opacity: 0.9;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* Features Grid */
@@ -238,6 +248,30 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .subscriptions-list {
@@ -338,7 +372,11 @@
             transition: all 0.2s;
         }
 
-        .sub-actions button:hover {
+        .sub-actions button.edit:hover {
+            background: var(--primary);
+        }
+
+        .sub-actions button.delete:hover {
             background: var(--danger);
         }
 
@@ -417,6 +455,35 @@
         .btn-secondary {
             background: var(--card-hover);
             color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--card);
+            border: 1px solid var(--success);
+            color: var(--text);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            transform: translateY(200%);
+            transition: transform 0.3s;
+            max-width: 320px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            border-color: var(--danger);
         }
 
         /* Alerts Section */
@@ -569,9 +636,9 @@
     <nav>
         <div class="logo">💳 SubTrack</div>
         <div class="nav-links">
-            <button class="nav-link active" onclick="showPage('home')">Home</button>
-            <button class="nav-link" onclick="showPage('dashboard')">Dashboard</button>
-            <button class="nav-link" onclick="showPage('add')">Add Subscription</button>
+            <button class="nav-link active" data-page="home" onclick="showPage('home')">Home</button>
+            <button class="nav-link" data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+            <button class="nav-link" data-page="add" onclick="showPage('add')">Add Subscription</button>
         </div>
         <div class="currency-selector">
             <label>💱</label>
@@ -601,25 +668,43 @@
             </div>
             <div class="feature-card">
                 <div class="feature-icon">⏰</div>
-                <h3>Never Miss a Renewal</h3>
-                <p>Get alerted before any subscription renews so you can decide to keep or cancel.</p>
+                <h3>Browser Reminders</h3>
+                <p>Opt in to desktop notifications and we'll ping you before any subscription renews.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">💡</div>
                 <h3>Smart Insights</h3>
-                <p>AI-powered suggestions help you identify unused subscriptions and save money.</p>
+                <p>Category spending analysis and unused-subscription detection to save money.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🌍</div>
                 <h3>Multi-Currency</h3>
-                <p>Track subscriptions in any currency - perfect for international services.</p>
+                <p>Pick a display currency and we format amounts with the right locale.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💾</div>
+                <h3>Backup & Restore</h3>
+                <p>Export your data as JSON any time, import on another device. Your data, your control.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Private by Default</h3>
+                <p>Everything stays in your browser's local storage. No server, no account, no tracking.</p>
             </div>
         </div>
     </div>
 
     <!-- Dashboard Page -->
     <div id="dashboard" class="page">
-        <h1 style="margin-bottom: 1.5rem;">Dashboard</h1>
+        <div class="section-header">
+            <h1>Dashboard</h1>
+            <div class="section-actions">
+                <button id="notifBtn" class="btn btn-secondary btn-sm" onclick="enableNotifications()">🔔 Enable reminders</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData()">⬇️ Export</button>
+                <button class="btn btn-secondary btn-sm" onclick="triggerImport()">⬆️ Import</button>
+                <input type="file" id="importFile" accept="application/json" style="display:none">
+            </div>
+        </div>
 
         <!-- Stats Cards -->
         <div class="stats-grid">
@@ -636,7 +721,7 @@
                 <div class="stat-value" id="activeCount">0</div>
             </div>
             <div class="stat-card warning" id="upcomingCard" style="display: none;">
-                <div class="stat-label">⚠️ Upcoming Renewals (7 days)</div>
+                <div class="stat-label">⚠️ Upcoming Renewals</div>
                 <div class="stat-value warning" id="upcomingCount">0</div>
             </div>
         </div>
@@ -649,7 +734,7 @@
 
         <!-- AI Advisor -->
         <div class="advisor-section" id="advisorSection" style="display: none;">
-            <h3>🤖 AI Spending Advisor</h3>
+            <h3>🤖 Spending Advisor</h3>
             <div class="advisor-tips" id="advisorTips"></div>
         </div>
 
@@ -662,7 +747,7 @@
                 </div>
             </div>
             <div class="chart-card">
-                <h3>Monthly Trend</h3>
+                <h3>Monthly Trend (real history)</h3>
                 <div class="chart-container">
                     <canvas id="trendChart"></canvas>
                 </div>
@@ -672,8 +757,10 @@
         <!-- Subscriptions List -->
         <div class="section-header">
             <h3>All Subscriptions</h3>
-            <button class="btn btn-primary" onclick="showPage('add')">+ Add New</button>
+            <button class="btn btn-primary btn-sm" onclick="showPage('add')">+ Add New</button>
         </div>
+
+        <input type="search" class="search-input" id="searchInput" placeholder="🔍 Search by service name..." oninput="searchChange(event)">
 
         <div class="category-filter">
             <button class="category-pill active" onclick="filterCategory('all', this)">All</button>
@@ -697,12 +784,12 @@
     <!-- Add Subscription Page -->
     <div id="add" class="page">
         <h1 style="margin-bottom: 1.5rem;">Add Subscription</h1>
-        
+
         <div class="modal" style="margin: 0 auto; max-width: 500px;">
             <form id="subscriptionForm" onsubmit="addSubscription(event)">
                 <div class="form-group">
                     <label>Service Name</label>
-                    <input type="text" id="serviceName" placeholder="e.g., Netflix, Spotify" required>
+                    <input type="text" id="serviceName" placeholder="e.g., Netflix, Spotify" maxlength="100" required>
                 </div>
 
                 <div class="form-group">
@@ -731,13 +818,19 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Next Renewal Date</label>
-                    <input type="date" id="renewalDate" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Next Renewal Date</label>
+                        <input type="date" id="renewalDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Remind me (days before)</label>
+                        <input type="number" id="reminderDays" value="7" min="1" max="90">
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Last Used (Optional - for smart suggestions)</label>
+                    <label>Last Used (optional — unlocks unused-sub tips)</label>
                     <input type="date" id="lastUsed">
                 </div>
 
@@ -771,7 +864,7 @@
                 <input type="hidden" id="editId">
                 <div class="form-group">
                     <label>Service Name</label>
-                    <input type="text" id="editServiceName" required>
+                    <input type="text" id="editServiceName" maxlength="100" required>
                 </div>
                 <div class="form-group">
                     <label>Category</label>
@@ -797,9 +890,15 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Next Renewal Date</label>
-                    <input type="date" id="editRenewalDate" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Next Renewal Date</label>
+                        <input type="date" id="editRenewalDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Remind me (days before)</label>
+                        <input type="number" id="editReminderDays" min="1" max="90">
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -809,62 +908,180 @@
         </div>
     </div>
 
-    <script>
-        // State Management
-        let subscriptions = JSON.parse(localStorage.getItem('subscriptions')) || [];
-        let currentCurrency = localStorage.getItem('currency') || '₹';
-        let currentFilter = 'all';
-        let categoryChart, trendChart;
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
-        // Initialize
+    <script>
+        // ===== Constants =====
+        const REMINDER_DAYS_DEFAULT = 7;
+        const STORAGE_KEY = 'subscriptions';
+        const HISTORY_KEY = 'spendHistory';
+        const CURRENCY_KEY = 'currency';
+        const NOTIFIED_KEY = 'notifiedRenewals';
+        const REMINDER_CHECK_MS = 60 * 60 * 1000; // 1h while page open
+
+        const CATEGORY_ICONS = { entertainment: '🎬', education: '📚', fitness: '💪', productivity: '⚡', other: '📦' };
+        const CATEGORY_NAMES = { entertainment: 'Entertainment', education: 'Education', fitness: 'Fitness', productivity: 'Productivity', other: 'Other' };
+        const CATEGORY_COLORS = { entertainment: '#ef4444', education: '#3b82f6', fitness: '#10b981', productivity: '#f59e0b', other: '#8b5cf6' };
+        const CURRENCY_LOCALE = { '₹': 'en-IN', '$': 'en-US', '€': 'de-DE', '£': 'en-GB' };
+
+        // ===== Utils =====
+        function escapeHTML(str) {
+            if (str == null) return '';
+            return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function todayAtMidnight() {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function parseISODate(s) {
+            const d = new Date(s);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function toISODate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function addCycle(dateStr, cycle) {
+            const d = parseISODate(dateStr);
+            if (cycle === 'weekly') d.setDate(d.getDate() + 7);
+            else if (cycle === 'yearly') d.setFullYear(d.getFullYear() + 1);
+            else d.setMonth(d.getMonth() + 1);
+            return toISODate(d);
+        }
+
+        function newId() {
+            if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+            return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        }
+
+        function toast(msg, isError = false) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.toggle('error', isError);
+            el.classList.add('show');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        // ===== State =====
+        let subscriptions = loadSubscriptions();
+        let currentCurrency = localStorage.getItem(CURRENCY_KEY) || '₹';
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let categoryChart, trendChart;
+        let reminderInterval;
+
+        function loadSubscriptions() {
+            const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return raw.map(s => ({
+                ...s,
+                id: String(s.id),
+                reminderDays: Number.isFinite(s.reminderDays) ? s.reminderDays : REMINDER_DAYS_DEFAULT
+            }));
+        }
+
+        function saveSubscriptions() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(subscriptions));
+        }
+
+        // ===== Init =====
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('currencySelect').value = currentCurrency;
             document.getElementById('renewalDate').valueAsDate = new Date();
+            autoAdvanceRenewals();
+            snapshotSpending();
             renderDashboard();
+            setupReminders();
+            document.getElementById('importFile').addEventListener('change', importData);
+            // Close edit modal on backdrop click
+            document.getElementById('editModal').addEventListener('click', e => {
+                if (e.target.id === 'editModal') closeEditModal();
+            });
         });
 
-        // Page Navigation
+        // ===== Navigation =====
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            document.querySelector(`[onclick="showPage('${pageId}')"]`).classList.add('active');
-            
-            if (pageId === 'dashboard') {
-                renderDashboard();
-            }
+            const page = document.getElementById(pageId);
+            if (page) page.classList.add('active');
+            const navBtn = document.querySelector(`.nav-link[data-page="${pageId}"]`);
+            if (navBtn) navBtn.classList.add('active');
+            if (pageId === 'dashboard') renderDashboard();
         }
 
-        // Currency
+        // ===== Currency =====
         function changeCurrency() {
             currentCurrency = document.getElementById('currencySelect').value;
-            localStorage.setItem('currency', currentCurrency);
+            localStorage.setItem(CURRENCY_KEY, currentCurrency);
             renderDashboard();
         }
 
         function formatCurrency(amount) {
-            return `${currentCurrency}${amount.toLocaleString('en-IN')}`;
+            const locale = CURRENCY_LOCALE[currentCurrency] || 'en-US';
+            const n = Number(amount) || 0;
+            return `${currentCurrency}${n.toLocaleString(locale, { maximumFractionDigits: 0 })}`;
         }
 
-        // Add Subscription
+        // ===== Auto-advance past renewals =====
+        function autoAdvanceRenewals() {
+            const today = todayAtMidnight();
+            let changed = false;
+            subscriptions.forEach(sub => {
+                let renewal = parseISODate(sub.renewalDate);
+                let guard = 0;
+                while (renewal < today && guard++ < 200) {
+                    sub.renewalDate = addCycle(sub.renewalDate, sub.cycle);
+                    renewal = parseISODate(sub.renewalDate);
+                    changed = true;
+                }
+            });
+            if (changed) saveSubscriptions();
+        }
+
+        // ===== Spending history snapshot (for real trend chart) =====
+        function snapshotSpending() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+            const now = new Date();
+            const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const monthlyTotal = subscriptions.reduce((sum, s) => sum + getMonthlyEquivalent(s), 0);
+            history[key] = Math.round(monthlyTotal);
+            // Keep last 12 months
+            const keys = Object.keys(history).sort();
+            while (keys.length > 12) {
+                delete history[keys.shift()];
+            }
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        }
+
+        // ===== Subscription CRUD =====
         function addSubscription(e) {
             e.preventDefault();
-            
+            const name = document.getElementById('serviceName').value.trim();
+            if (!name) return;
             const sub = {
-                id: Date.now(),
-                name: document.getElementById('serviceName').value,
+                id: newId(),
+                name,
                 category: document.getElementById('category').value,
                 cost: parseFloat(document.getElementById('cost').value),
                 cycle: document.getElementById('cycle').value,
                 renewalDate: document.getElementById('renewalDate').value,
                 lastUsed: document.getElementById('lastUsed').value || null,
+                reminderDays: parseInt(document.getElementById('reminderDays').value, 10) || REMINDER_DAYS_DEFAULT,
                 createdAt: new Date().toISOString()
             };
-
             subscriptions.push(sub);
             saveSubscriptions();
+            snapshotSpending();
             document.getElementById('subscriptionForm').reset();
             document.getElementById('renewalDate').valueAsDate = new Date();
+            toast(`Added ${sub.name}`);
             showPage('dashboard');
         }
 
@@ -873,24 +1090,21 @@
             document.getElementById('category').value = category;
             document.getElementById('cost').value = cost;
             document.getElementById('cycle').value = 'monthly';
-            
             const nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             document.getElementById('renewalDate').valueAsDate = nextMonth;
         }
 
-        // Edit Subscription
         function editSubscription(id) {
             const sub = subscriptions.find(s => s.id === id);
             if (!sub) return;
-
             document.getElementById('editId').value = id;
             document.getElementById('editServiceName').value = sub.name;
             document.getElementById('editCategory').value = sub.category;
             document.getElementById('editCost').value = sub.cost;
             document.getElementById('editCycle').value = sub.cycle;
             document.getElementById('editRenewalDate').value = sub.renewalDate;
-            
+            document.getElementById('editReminderDays').value = sub.reminderDays ?? REMINDER_DAYS_DEFAULT;
             document.getElementById('editModal').classList.add('active');
         }
 
@@ -900,57 +1114,54 @@
 
         function saveEdit(e) {
             e.preventDefault();
-            const id = parseInt(document.getElementById('editId').value);
+            const id = document.getElementById('editId').value;
             const index = subscriptions.findIndex(s => s.id === id);
-            
-            if (index !== -1) {
-                subscriptions[index] = {
-                    ...subscriptions[index],
-                    name: document.getElementById('editServiceName').value,
-                    category: document.getElementById('editCategory').value,
-                    cost: parseFloat(document.getElementById('editCost').value),
-                    cycle: document.getElementById('editCycle').value,
-                    renewalDate: document.getElementById('editRenewalDate').value
-                };
-                saveSubscriptions();
-                closeEditModal();
-                renderDashboard();
-            }
+            if (index === -1) return;
+            subscriptions[index] = {
+                ...subscriptions[index],
+                name: document.getElementById('editServiceName').value.trim(),
+                category: document.getElementById('editCategory').value,
+                cost: parseFloat(document.getElementById('editCost').value),
+                cycle: document.getElementById('editCycle').value,
+                renewalDate: document.getElementById('editRenewalDate').value,
+                reminderDays: parseInt(document.getElementById('editReminderDays').value, 10) || REMINDER_DAYS_DEFAULT
+            };
+            saveSubscriptions();
+            closeEditModal();
+            renderDashboard();
+            toast('Saved changes');
         }
 
-        // Delete Subscription
         function deleteSubscription(id) {
-            if (confirm('Are you sure you want to delete this subscription?')) {
-                subscriptions = subscriptions.filter(s => s.id !== id);
-                saveSubscriptions();
-                renderDashboard();
-            }
+            const sub = subscriptions.find(s => s.id === id);
+            if (!sub) return;
+            if (!confirm(`Delete "${sub.name}"? This cannot be undone.`)) return;
+            subscriptions = subscriptions.filter(s => s.id !== id);
+            saveSubscriptions();
+            renderDashboard();
+            toast('Deleted');
         }
 
-        // Save to LocalStorage
-        function saveSubscriptions() {
-            localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
-        }
-
-        // Calculate Monthly Cost
+        // ===== Helpers =====
         function getMonthlyEquivalent(sub) {
             switch (sub.cycle) {
-                case 'weekly': return sub.cost * 4.33;
+                case 'weekly': return sub.cost * 4.345;
                 case 'yearly': return sub.cost / 12;
                 default: return sub.cost;
             }
         }
 
-        // Days Until Renewal
         function getDaysUntilRenewal(dateStr) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const renewal = new Date(dateStr);
-            renewal.setHours(0, 0, 0, 0);
-            return Math.ceil((renewal - today) / (1000 * 60 * 60 * 24));
+            const today = todayAtMidnight();
+            const renewal = parseISODate(dateStr);
+            return Math.round((renewal - today) / (1000 * 60 * 60 * 24));
         }
 
-        // Filter by Category
+        function isWithinReminderWindow(sub) {
+            const days = getDaysUntilRenewal(sub.renewalDate);
+            return days >= 0 && days <= (sub.reminderDays ?? REMINDER_DAYS_DEFAULT);
+        }
+
         function filterCategory(category, btn) {
             currentFilter = category;
             document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
@@ -958,7 +1169,12 @@
             renderSubscriptionsList();
         }
 
-        // Render Dashboard
+        function searchChange(e) {
+            currentSearch = e.target.value.toLowerCase().trim();
+            renderSubscriptionsList();
+        }
+
+        // ===== Rendering =====
         function renderDashboard() {
             renderStats();
             renderAlerts();
@@ -968,14 +1184,13 @@
         }
 
         function renderStats() {
-            const monthlyTotal = subscriptions.reduce((sum, sub) => sum + getMonthlyEquivalent(sub), 0);
+            const monthlyTotal = subscriptions.reduce((sum, s) => sum + getMonthlyEquivalent(s), 0);
             const yearlyTotal = monthlyTotal * 12;
-            const upcoming = subscriptions.filter(s => getDaysUntilRenewal(s.renewalDate) <= 7 && getDaysUntilRenewal(s.renewalDate) >= 0).length;
+            const upcoming = subscriptions.filter(isWithinReminderWindow).length;
 
             document.getElementById('monthlySpend').textContent = formatCurrency(Math.round(monthlyTotal));
             document.getElementById('yearlySpend').textContent = formatCurrency(Math.round(yearlyTotal));
             document.getElementById('activeCount').textContent = subscriptions.length;
-            
             const upcomingCard = document.getElementById('upcomingCard');
             if (upcoming > 0) {
                 upcomingCard.style.display = 'block';
@@ -989,14 +1204,13 @@
             const alertsSection = document.getElementById('alertsSection');
             const alertsList = document.getElementById('alertsList');
             const upcoming = subscriptions
-                .filter(s => getDaysUntilRenewal(s.renewalDate) <= 7 && getDaysUntilRenewal(s.renewalDate) >= 0)
+                .filter(isWithinReminderWindow)
                 .sort((a, b) => getDaysUntilRenewal(a.renewalDate) - getDaysUntilRenewal(b.renewalDate));
 
             if (upcoming.length === 0) {
                 alertsSection.style.display = 'none';
                 return;
             }
-
             alertsSection.style.display = 'block';
             alertsList.innerHTML = upcoming.map(sub => {
                 const days = getDaysUntilRenewal(sub.renewalDate);
@@ -1005,7 +1219,7 @@
                     <div class="alert-card">
                         <div class="alert-icon">⏰</div>
                         <div class="alert-content">
-                            <h4>${sub.name} renews ${daysText.toLowerCase()}</h4>
+                            <h4>${escapeHTML(sub.name)} renews ${daysText.toLowerCase()}</h4>
                             <p>You will be charged ${formatCurrency(sub.cost)} on ${new Date(sub.renewalDate).toLocaleDateString()}</p>
                         </div>
                     </div>
@@ -1018,57 +1232,41 @@
             const advisorTips = document.getElementById('advisorTips');
             const tips = [];
 
-            // Category spending analysis
             const categorySpending = {};
             subscriptions.forEach(sub => {
                 const monthly = getMonthlyEquivalent(sub);
                 categorySpending[sub.category] = (categorySpending[sub.category] || 0) + monthly;
             });
 
-            const categoryNames = {
-                entertainment: 'Entertainment',
-                education: 'Education',
-                fitness: 'Fitness',
-                productivity: 'Productivity',
-                other: 'Other'
-            };
-
             Object.entries(categorySpending).forEach(([cat, amount]) => {
                 if (amount > 500) {
                     tips.push({
                         icon: '📊',
-                        text: `You're spending ${formatCurrency(Math.round(amount))}/month on ${categoryNames[cat]}. Consider if all these services are essential.`
+                        text: `Spending ${formatCurrency(Math.round(amount))}/mo on ${CATEGORY_NAMES[cat]}. Review if all essential.`
                     });
                 }
             });
 
-            // Unused subscriptions
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
             subscriptions.forEach(sub => {
                 if (sub.lastUsed && new Date(sub.lastUsed) < thirtyDaysAgo) {
                     tips.push({
                         icon: '💤',
-                        text: `You haven't used ${sub.name} in over 30 days. Consider canceling to save ${formatCurrency(getMonthlyEquivalent(sub))}/month.`
+                        text: `${sub.name} unused 30+ days. Canceling saves ${formatCurrency(Math.round(getMonthlyEquivalent(sub)))}/mo.`
                     });
                 }
             });
 
-            // Duplicate category suggestions
-            if (categorySpending.entertainment > 800) {
-                tips.push({
-                    icon: '💡',
-                    text: `Multiple streaming services? Consider rotating subscriptions monthly instead of keeping all active.`
-                });
+            if ((categorySpending.entertainment || 0) > 800) {
+                tips.push({ icon: '💡', text: 'Multiple streaming services — consider rotating instead of stacking.' });
             }
 
-            // Total spending warning
-            const totalMonthly = subscriptions.reduce((sum, sub) => sum + getMonthlyEquivalent(sub), 0);
+            const totalMonthly = subscriptions.reduce((sum, s) => sum + getMonthlyEquivalent(s), 0);
             if (totalMonthly > 2000) {
                 tips.push({
                     icon: '⚠️',
-                    text: `Your subscriptions total ${formatCurrency(Math.round(totalMonthly))}/month (${formatCurrency(Math.round(totalMonthly * 12))}/year). Review for potential savings.`
+                    text: `Total ${formatCurrency(Math.round(totalMonthly))}/mo (${formatCurrency(Math.round(totalMonthly * 12))}/yr). Review for savings.`
                 });
             }
 
@@ -1076,89 +1274,61 @@
                 advisorSection.style.display = 'none';
                 return;
             }
-
             advisorSection.style.display = 'block';
             advisorTips.innerHTML = tips.map(tip => `
                 <div class="advisor-tip">
                     <span class="advisor-tip-icon">${tip.icon}</span>
-                    <span>${tip.text}</span>
+                    <span>${escapeHTML(tip.text)}</span>
                 </div>
             `).join('');
         }
 
         function renderCharts() {
-            // Category Chart
+            // Category doughnut
             const categoryData = {};
             subscriptions.forEach(sub => {
                 const monthly = getMonthlyEquivalent(sub);
                 categoryData[sub.category] = (categoryData[sub.category] || 0) + monthly;
             });
-
-            const categoryLabels = {
-                entertainment: '🎬 Entertainment',
-                education: '📚 Education',
-                fitness: '💪 Fitness',
-                productivity: '⚡ Productivity',
-                other: '📦 Other'
-            };
-
-            const categoryColors = {
-                entertainment: '#ef4444',
-                education: '#3b82f6',
-                fitness: '#10b981',
-                productivity: '#f59e0b',
-                other: '#8b5cf6'
-            };
-
             const ctx1 = document.getElementById('categoryChart').getContext('2d');
-            
             if (categoryChart) categoryChart.destroy();
-            
             if (Object.keys(categoryData).length > 0) {
                 categoryChart = new Chart(ctx1, {
                     type: 'doughnut',
                     data: {
-                        labels: Object.keys(categoryData).map(k => categoryLabels[k]),
+                        labels: Object.keys(categoryData).map(k => `${CATEGORY_ICONS[k]} ${CATEGORY_NAMES[k]}`),
                         datasets: [{
-                            data: Object.values(categoryData),
-                            backgroundColor: Object.keys(categoryData).map(k => categoryColors[k]),
+                            data: Object.values(categoryData).map(v => Math.round(v)),
+                            backgroundColor: Object.keys(categoryData).map(k => CATEGORY_COLORS[k]),
                             borderWidth: 0
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { color: '#94a3b8' }
-                            }
-                        }
+                        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
                     }
                 });
             }
 
-            // Trend Chart (simulated monthly data)
-            const ctx2 = document.getElementById('trendChart').getContext('2d');
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-            const monthlyTotal = subscriptions.reduce((sum, sub) => sum + getMonthlyEquivalent(sub), 0);
-            
-            // Simulate historical data with some variance
-            const trendData = months.map((_, i) => {
-                const variance = (Math.random() - 0.5) * monthlyTotal * 0.3;
-                return Math.max(0, Math.round(monthlyTotal + variance - (5 - i) * 50));
+            // Trend: real snapshot history
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+            const keys = Object.keys(history).sort().slice(-6);
+            const labels = keys.map(k => {
+                const [y, m] = k.split('-');
+                return new Date(Number(y), Number(m) - 1, 1).toLocaleString(undefined, { month: 'short' });
             });
-            trendData[5] = Math.round(monthlyTotal); // Current month is accurate
+            const values = keys.map(k => history[k]);
 
+            const ctx2 = document.getElementById('trendChart').getContext('2d');
             if (trendChart) trendChart.destroy();
-            
             trendChart = new Chart(ctx2, {
                 type: 'line',
                 data: {
-                    labels: months,
+                    labels: labels.length ? labels : ['This month'],
                     datasets: [{
-                        label: 'Monthly Spending',
-                        data: trendData,
+                        label: 'Monthly Spend',
+                        data: values.length ? values : [Math.round(subscriptions.reduce((s, x) => s + getMonthlyEquivalent(x), 0))],
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         fill: true,
@@ -1168,19 +1338,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#334155' },
-                            ticks: { color: '#94a3b8' }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#94a3b8' }
-                        }
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
                     }
                 }
             });
@@ -1188,97 +1349,183 @@
 
         function renderSubscriptionsList() {
             const list = document.getElementById('subscriptionsList');
-            
             let filtered = subscriptions;
-            if (currentFilter !== 'all') {
-                filtered = subscriptions.filter(s => s.category === currentFilter);
-            }
+            if (currentFilter !== 'all') filtered = filtered.filter(s => s.category === currentFilter);
+            if (currentSearch) filtered = filtered.filter(s => s.name.toLowerCase().includes(currentSearch));
 
             if (filtered.length === 0) {
+                const isEmpty = currentFilter === 'all' && !currentSearch;
                 list.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">📭</div>
-                        <h3>${currentFilter === 'all' ? 'No subscriptions yet' : 'No subscriptions in this category'}</h3>
-                        <p>${currentFilter === 'all' ? 'Start tracking your subscriptions to see them here.' : 'Add subscriptions in this category to see them here.'}</p>
+                        <h3>${isEmpty ? 'No subscriptions yet' : 'Nothing matches'}</h3>
+                        <p>${isEmpty ? 'Start tracking to see them here.' : 'Try a different filter or search.'}</p>
                         <button class="btn btn-primary" onclick="showPage('add')" style="margin-top: 1rem;">+ Add Subscription</button>
-                    </div>
-                `;
+                    </div>`;
                 return;
             }
-
-            // Sort by renewal date
-            filtered.sort((a, b) => getDaysUntilRenewal(a.renewalDate) - getDaysUntilRenewal(b.renewalDate));
-
-            const categoryIcons = {
-                entertainment: '🎬',
-                education: '📚',
-                fitness: '💪',
-                productivity: '⚡',
-                other: '📦'
-            };
+            filtered = [...filtered].sort((a, b) => getDaysUntilRenewal(a.renewalDate) - getDaysUntilRenewal(b.renewalDate));
 
             list.innerHTML = filtered.map(sub => {
                 const days = getDaysUntilRenewal(sub.renewalDate);
-                const isExpiringSoon = days >= 0 && days <= 7;
+                const reminderWindow = sub.reminderDays ?? REMINDER_DAYS_DEFAULT;
+                const isExpiringSoon = days >= 0 && days <= reminderWindow;
                 const daysText = days < 0 ? 'Overdue' : days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `${days} days`;
                 const cycleLabel = sub.cycle === 'monthly' ? '/mo' : sub.cycle === 'yearly' ? '/yr' : '/wk';
-
+                const safeId = escapeHTML(sub.id);
                 return `
                     <div class="subscription-item ${isExpiringSoon ? 'expiring-soon' : ''}">
-                        <div class="sub-icon">${categoryIcons[sub.category]}</div>
+                        <div class="sub-icon">${CATEGORY_ICONS[sub.category] || '📦'}</div>
                         <div class="sub-info">
-                            <h4>${sub.name}</h4>
-                            <p>${sub.category.charAt(0).toUpperCase() + sub.category.slice(1)} • ${sub.cycle}</p>
+                            <h4>${escapeHTML(sub.name)}</h4>
+                            <p>${CATEGORY_NAMES[sub.category] || 'Other'} • ${sub.cycle}</p>
                         </div>
                         <div class="sub-cost">
                             <div class="amount">${formatCurrency(sub.cost)}</div>
                             <div class="cycle">${cycleLabel}</div>
                         </div>
                         <div class="sub-renewal">
-                            <div class="date">${new Date(sub.renewalDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                            <div class="date">${new Date(sub.renewalDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div>
                             <div class="days ${isExpiringSoon ? 'urgent' : 'safe'}">${daysText}</div>
                         </div>
                         <div class="sub-actions">
-                            <button onclick="editSubscription(${sub.id})" title="Edit">✏️</button>
-                            <button onclick="deleteSubscription(${sub.id})" title="Delete">🗑️</button>
+                            <button class="edit" onclick="editSubscription('${safeId}')" title="Edit">✏️</button>
+                            <button class="delete" onclick="deleteSubscription('${safeId}')" title="Delete">🗑️</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
-        // Add sample data for demo
-        function addSampleData() {
-            if (subscriptions.length === 0) {
-                const today = new Date();
-                const sampleSubs = [
-                    { name: 'Netflix', category: 'entertainment', cost: 199, cycle: 'monthly', renewalDate: addDays(today, 3) },
-                    { name: 'Spotify', category: 'entertainment', cost: 119, cycle: 'monthly', renewalDate: addDays(today, 12) },
-                    { name: 'Amazon Prime', category: 'entertainment', cost: 1499, cycle: 'yearly', renewalDate: addDays(today, 45) },
-                    { name: 'Gym Membership', category: 'fitness', cost: 1500, cycle: 'monthly', renewalDate: addDays(today, 5), lastUsed: addDays(today, -35) },
-                    { name: 'Coursera Plus', category: 'education', cost: 3000, cycle: 'monthly', renewalDate: addDays(today, 20) },
-                    { name: 'Notion', category: 'productivity', cost: 800, cycle: 'monthly', renewalDate: addDays(today, 8) }
-                ];
-
-                sampleSubs.forEach(sub => {
-                    subscriptions.push({
-                        id: Date.now() + Math.random(),
-                        ...sub,
-                        createdAt: new Date().toISOString()
-                    });
-                });
-                saveSubscriptions();
+        // ===== Browser Notifications =====
+        async function enableNotifications() {
+            if (!('Notification' in window)) {
+                toast('Notifications not supported in this browser.', true);
+                return;
+            }
+            try {
+                const perm = await Notification.requestPermission();
+                updateNotifBtn();
+                if (perm === 'granted') {
+                    new Notification('SubTrack reminders on', { body: "We'll alert you before each renewal." });
+                    checkRemindersNow();
+                } else {
+                    toast('Permission not granted.', true);
+                }
+            } catch (err) {
+                toast('Could not enable: ' + err.message, true);
             }
         }
 
-        function addDays(date, days) {
-            const result = new Date(date);
-            result.setDate(result.getDate() + days);
-            return result.toISOString().split('T')[0];
+        function updateNotifBtn() {
+            const btn = document.getElementById('notifBtn');
+            if (!btn) return;
+            if (!('Notification' in window)) {
+                btn.textContent = '🔕 Unsupported';
+                btn.disabled = true;
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                btn.textContent = '🔔 Reminders on';
+                btn.disabled = true;
+            } else if (Notification.permission === 'denied') {
+                btn.textContent = '🔕 Blocked — change in site settings';
+                btn.disabled = true;
+            } else {
+                btn.textContent = '🔔 Enable reminders';
+                btn.disabled = false;
+            }
         }
 
-        // Uncomment below line to add sample data on first load
-        // addSampleData();
+        function setupReminders() {
+            updateNotifBtn();
+            checkRemindersNow();
+            clearInterval(reminderInterval);
+            reminderInterval = setInterval(checkRemindersNow, REMINDER_CHECK_MS);
+        }
+
+        function checkRemindersNow() {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            const notified = JSON.parse(localStorage.getItem(NOTIFIED_KEY) || '{}');
+
+            subscriptions.forEach(sub => {
+                if (!isWithinReminderWindow(sub)) return;
+                const key = `${sub.id}:${sub.renewalDate}`;
+                if (notified[key]) return;
+                const days = getDaysUntilRenewal(sub.renewalDate);
+                const dayLabel = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+                new Notification(`${sub.name} renews ${dayLabel}`, {
+                    body: `${formatCurrency(sub.cost)} on ${new Date(sub.renewalDate).toLocaleDateString()}`,
+                    tag: key
+                });
+                notified[key] = Date.now();
+            });
+
+            // Purge stale entries (sub deleted or date advanced)
+            Object.keys(notified).forEach(k => {
+                const idx = k.lastIndexOf(':');
+                const id = k.slice(0, idx);
+                const date = k.slice(idx + 1);
+                const sub = subscriptions.find(s => s.id === id);
+                if (!sub || sub.renewalDate !== date) delete notified[k];
+            });
+            localStorage.setItem(NOTIFIED_KEY, JSON.stringify(notified));
+        }
+
+        // ===== Import/Export =====
+        function exportData() {
+            const payload = {
+                schema: 'subtrack/v1',
+                exportedAt: new Date().toISOString(),
+                subscriptions,
+                history: JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}')
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `subtrack-backup-${toISODate(new Date())}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            toast('Exported backup');
+        }
+
+        function triggerImport() {
+            document.getElementById('importFile').click();
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = evt => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (!Array.isArray(data.subscriptions)) throw new Error('No subscriptions[] array in file');
+                    if (!confirm(`Replace current ${subscriptions.length} subscriptions with ${data.subscriptions.length} from backup?`)) {
+                        e.target.value = '';
+                        return;
+                    }
+                    subscriptions = data.subscriptions.map(s => ({
+                        ...s,
+                        id: String(s.id ?? newId()),
+                        reminderDays: Number.isFinite(s.reminderDays) ? s.reminderDays : REMINDER_DAYS_DEFAULT
+                    }));
+                    saveSubscriptions();
+                    if (data.history && typeof data.history === 'object') {
+                        localStorage.setItem(HISTORY_KEY, JSON.stringify(data.history));
+                    }
+                    autoAdvanceRenewals();
+                    renderDashboard();
+                    toast('Import complete');
+                } catch (err) {
+                    toast('Import failed: ' + err.message, true);
+                }
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        }
     </script>
 </body>
 </html>
